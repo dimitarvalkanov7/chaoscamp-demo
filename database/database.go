@@ -12,8 +12,6 @@ import (
 )
 
 func ConnectDB() *sql.DB {
-
-	//Load environmenatal variables
 	err := godotenv.Load()
 
 	if err != nil {
@@ -27,15 +25,15 @@ func ConnectDB() *sql.DB {
 	}
 	user := os.Getenv("user")
 	password := os.Getenv("password")
-	dbname := os.Getenv("dbname")
 
-	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s"+
-		"dbname=%s sslmode=disable", host, port, user, password, dbname)
+	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s "+
+		"dbname=demoscenes sslmode=disable", host, port, user, password)
 
 	db, err := sql.Open("postgres", psqlInfo)
 	if err != nil {
 		panic(err)
 	}
+	//defer db.Close()
 
 	return db
 }
