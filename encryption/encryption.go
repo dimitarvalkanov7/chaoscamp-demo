@@ -2,35 +2,68 @@ package encryption
 
 import (
 	"crypto/aes"
-	"encoding/hex"
-	"log"
+	"crypto/cipher"
+	"encoding/base64"
+	//"encoding/json"
+	"errors"
+	"github.com/dimitarvalkanov7/chaoscamp-demo/models"
+	"net/http"
 )
 
 var (
-	key = []byte("ZxxULO156stVFP3UzfcLM1Dn32EESlePg44")
+	key = "123456789012345678901234"
+	iv  = []byte{35, 46, 57, 24, 85, 35, 24, 74, 87, 35, 88, 98, 66, 32, 14, 05}
 )
 
-func Encrypt(plaintext string) string {
-	c, err := aes.NewCipher(key)
-	if err != nil {
-		log.Printf("NewCipher(%d bytes) = %s", len(key), err)
-		panic(err)
-	}
-	out := make([]byte, len(plaintext))
-	c.Encrypt(out, []byte(plaintext))
-
-	return hex.EncodeToString(out)
+func encodeBase64(b []byte) string {
+	return base64.StdEncoding.EncodeToString(b)
 }
 
-func Decrypt(ct string) {
-	ciphertext, _ := hex.DecodeString(ct)
-	c, err := aes.NewCipher(key)
+func decodeBase64(s string) []byte {
+	data, err := base64.StdEncoding.DecodeString(s)
 	if err != nil {
-		log.Printf("NewCipher(%d bytes) = %s", len(key), err)
 		panic(err)
 	}
-	plain := make([]byte, len(ciphertext))
-	c.Decrypt(plain, ciphertext)
-	s := string(plain[:])
-	log.Printf("AES Decrypyed Text:  %s\n", s)
+	return data
+}
+
+func Encrypt(text string) string {
+	block, err := aes.NewCipher([]byte(key))
+	if err != nil {
+		panic(err)
+	}
+	plaintext := []byte(text)
+	cfb := cipher.NewCFBEncrypter(block, iv)
+	ciphertext := make([]byte, len(plaintext))
+	cfb.XORKeyStream(ciphertext, plaintext)
+	return encodeBase64(ciphertext)
+}
+
+func Decrypt(text string) string {
+	block, err := aes.NewCipher([]byte(key))
+	if err != nil {
+		panic(err)
+	}
+	ciphertext := decodeBase64(text)
+	cfb := cipher.NewCFBEncrypter(block, iv)
+	plaintext := make([]byte, len(ciphertext))
+	cfb.XORKeyStream(plaintext, ciphertext)
+	return string(plaintext)
+}
+
+func GetLoggedUser(r *http.Request) (*models.User, error) {
+	c, err := r.Cookie("demoscenes")
+	if err != nil {
+		return nil, err
+	}
+
+	decrEmail := Decrypt(c.Value)
+
+	var user *(models.User)
+	user = user.GetUserByEmail(decrEmail)
+	if user == nil {
+		return nil, errors.New("No user with email: " + decrEmail)
+	}
+
+	return user, nil
 }
