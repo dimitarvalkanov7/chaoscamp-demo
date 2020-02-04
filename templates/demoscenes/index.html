@@ -2,5 +2,13 @@
 <html>
 <body>
     <h1>This is demoscenes index page</h1>
+    <br />
+    <br />
+    <h3>Temporary we list repos here</h3>
+    {{if ne (len .Repos) 0}}
+        {{range .Repos}}
+            <div>{{.}}</div>
+        {{end}}
+    {{end}}
 </body>
 </html> 

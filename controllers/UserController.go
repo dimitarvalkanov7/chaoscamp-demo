@@ -11,6 +11,7 @@ import (
 
 	"github.com/dimitarvalkanov7/chaoscamp-demo/database"
 	"github.com/dimitarvalkanov7/chaoscamp-demo/models"
+	"github.com/dimitarvalkanov7/chaoscamp-demo/services/github"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -28,8 +29,14 @@ func Home(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// TODO For test only
+	repos := github.GetAllRepositories()
+	type Context struct {
+		Repos []string
+	}
+	data := Context{Repos: repos}
 	tmpl := template.Must(template.ParseFiles(path.Join(basePath, "templates", "demoscenes", "index.html")))
-	err = tmpl.Execute(w, nil)
+	err = tmpl.Execute(w, data)
 	if err != nil {
 		log.Printf("Error executing template: %v\n", err)
 	}
