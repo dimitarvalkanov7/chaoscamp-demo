@@ -21,6 +21,15 @@ const (
 
 var db = database.ConnectDB()
 
+// TODO MOVE TO OTHER CONTROLLER
+func Repositories(w http.ResponseWriter, r *http.Request) {
+	tmpl := template.Must(template.ParseFiles(path.Join(basePath, "templates", "repository.html")))
+	err := tmpl.Execute(w, nil)
+	if err != nil {
+		log.Printf("Error executing template: %v\n", err)
+	}
+}
+
 func Home(w http.ResponseWriter, r *http.Request) {
 	_, err := encryption.GetLoggedUser(r)
 	if err != nil {
@@ -30,11 +39,13 @@ func Home(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// TODO For test only
-	repos := github.GetAllRepositories()
+	//github.GetBranches()
+	res := github.GetBranchesByRepository()
+	//res := github.GetAllRepositories()
 	type Context struct {
-		Repos []string
+		BranchesByRepo map[string][]string
 	}
-	data := Context{Repos: repos}
+	data := Context{BranchesByRepo: res}
 	tmpl := template.Must(template.ParseFiles(path.Join(basePath, "templates", "demoscenes", "index.html")))
 	err = tmpl.Execute(w, data)
 	if err != nil {

@@ -12,23 +12,12 @@ import (
 
 const (
 	USER        = "dimitarvalkanov7"
-	API_TOKEN   = "6f9a766f7730330cf3886776ed2fdfd726bc1a59"
-	GIT_API_URL = "https://api.github.com/dimitarvalkanov7/repos"
-	FULL_PATH   = "https://api.github.com/users/dimitarvalkanov7/repos?access_token=6f9a766f7730330cf3886776ed2fdfd726bc1a59"
+	API_TOKEN   = "04d2e2ff594e6dba68ffefe03e0af6871351e8af"
+	GIT_API_URL = "https://api.github.com/users/dimitarvalkanov7/repos"
+	fullPath    = "https://api.github.com/users/dimitarvalkanov7/repos?access_token=04d2e2ff594e6dba68ffefe03e0af6871351e8af"
 )
 
-func GetAllRepositories() []string {
-	repoList := getFullRepositoriesList()
-
-	repoNames := make([]string, len(repoList))
-	for _, v := range repoList {
-		repoNames = append(repoNames, v.Name)
-	}
-
-	return repoNames
-}
-
-func getFullRepositoriesList() []Repository {
+func GetAllRepositories() []Repository {
 	client := &http.Client{}
 	token := fmt.Sprintf("%s/token:%s", USER, API_TOKEN)
 
@@ -42,8 +31,7 @@ func getFullRepositoriesList() []Repository {
 	}
 	encodedToken := encodeBase64([]byte(token))
 
-	//request, err := http.NewRequest("GET", GIT_API_URL, nil)
-	request, err := http.NewRequest("GET", FULL_PATH, nil)
+	request, err := http.NewRequest("GET", GIT_API_URL, nil)
 	authHeader := fmt.Sprintf("Basic %s", encodedToken)
 	if err != nil {
 		log.Println(err)
@@ -66,7 +54,120 @@ func getFullRepositoriesList() []Repository {
 	repositories := make([]Repository, 0)
 	json.Unmarshal([]byte(text), &repositories)
 
+	// repoNames := make([]string, len(repositories))
+	// for _, v := range repositories {
+	// 	repoNames = append(repoNames, v.Name)
+	// }
+
+	// return repoNames
 	return repositories
+}
+
+func GetAllBranches() {
+	client := &http.Client{}
+	token := fmt.Sprintf("%s/token:%s", USER, API_TOKEN)
+
+	currTokenLen := len(token)
+	for {
+		token = strings.Replace(token, "\n", "", -1)
+		if currTokenLen == len(token) {
+			break
+		}
+		currTokenLen = len(token)
+	}
+	encodedToken := encodeBase64([]byte(token))
+
+	//request, err := http.NewRequest("GET", GIT_API_URL, nil)
+	branches_url := "https://api.github.com/repos/dimitarvalkanov7/chaoscamp-demo/branches"
+	request, err := http.NewRequest("GET", branches_url, nil)
+	authHeader := fmt.Sprintf("Basic %s", encodedToken)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	// add header to request
+	request.Header.Set("Authorization", authHeader)
+
+	// perform get request
+	var text string
+	res, err := client.Do(request)
+	if err != nil {
+		log.Println(err)
+	} else {
+		body, _ := ioutil.ReadAll(res.Body)
+		text = string(body)
+		log.Println(text)
+	}
+}
+
+func GetAllBranchesForRepository(repository Repository) []Branch {
+	client := &http.Client{}
+	token := fmt.Sprintf("%s/token:%s", USER, API_TOKEN)
+
+	currTokenLen := len(token)
+	for {
+		token = strings.Replace(token, "\n", "", -1)
+		if currTokenLen == len(token) {
+			break
+		}
+		currTokenLen = len(token)
+	}
+	encodedToken := encodeBase64([]byte(token))
+
+	//request, err := http.NewRequest("GET", GIT_API_URL, nil)
+	//branches_url := "https://api.github.com/repos/dimitarvalkanov7/chaoscamp-demo/branches"
+	branches_url := fmt.Sprintf("https://api.github.com/repos/dimitarvalkanov7/%s/branches", repository.Name)
+	request, err := http.NewRequest("GET", branches_url, nil)
+	authHeader := fmt.Sprintf("Basic %s", encodedToken)
+	if err != nil {
+		log.Println(err)
+		return nil
+	}
+
+	// add header to request
+	request.Header.Set("Authorization", authHeader)
+
+	// perform get request
+	var text string
+	res, err := client.Do(request)
+	if err != nil {
+		log.Println(err)
+	} else {
+		body, _ := ioutil.ReadAll(res.Body)
+		text = string(body)
+	}
+
+	branches := make([]Branch, 0)
+	json.Unmarshal([]byte(text), &branches)
+
+	return branches
+}
+
+func GetBranchesByRepository() map[string][]string {
+	repositories := GetAllRepositories()
+
+	branchesByRepository := make(map[Repository][]Branch)
+
+	for _, repo := range repositories {
+		branchesByRepository[repo] = GetAllBranchesForRepository(repo)
+	}
+
+	normalized := normalizeBranchRepoMap(branchesByRepository)
+
+	return normalized
+}
+
+func normalizeBranchRepoMap(bbr map[Repository][]Branch) map[string][]string {
+	normalized := make(map[string][]string)
+
+	for repo, branches := range bbr {
+		for _, branch := range branches {
+			normalized[repo.Name] = append(normalized[repo.Name], branch.Name)
+		}
+	}
+
+	return normalized
 }
 
 func encodeBase64(b []byte) string {
@@ -175,4 +276,27 @@ type Permissions struct {
 	Admin bool
 	Push  bool
 	Pull  bool
+}
+
+type Branch struct {
+	Name           string
+	Commit         Commit
+	Protected      bool
+	Protection     Protection
+	Protection_url string
+}
+
+type Commit struct {
+	Sha string
+	Url string
+}
+
+type Protection struct {
+	Enabled                bool
+	Required_status_checks Required_status_checks
+}
+
+type Required_status_checks struct {
+	Enforcement_level string
+	contexts          []string
 }

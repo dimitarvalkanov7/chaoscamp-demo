@@ -5,10 +5,22 @@
     <br />
     <br />
     <h3>Temporary we list repos here</h3>
-    {{if ne (len .Repos) 0}}
-        {{range .Repos}}
-            <div>{{.}}</div>
+        {{range $repo, $branches := .BranchesByRepo}}
+            <span>{{$repo}}</span>
+            <select>
+                {{range $branches}}
+                <option value="{{.}}">{{.}}</option>
+                {{end}}
+            </select>
+            <br/>
         {{end}}
-    {{end}}
+
+        <button id="new-demo-scene" onclick="redirectToCreateDemoScene()">Create new demo scene</button>
+
+        <script>
+            function redirectToCreateDemoScene() {
+                window.location.href = '/repositories';
+            }
+        </script>
 </body>
 </html> 
