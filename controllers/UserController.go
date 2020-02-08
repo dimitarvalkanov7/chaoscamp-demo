@@ -1,9 +1,7 @@
 package controllers
 
 import (
-	"github.com/dimitarvalkanov7/chaoscamp-demo/services/cmd"
 	//"encoding/json"
-	"github.com/dimitarvalkanov7/chaoscamp-demo/encryption"
 	"html/template"
 	"log"
 	"net/http"
@@ -11,6 +9,7 @@ import (
 	"time"
 
 	"github.com/dimitarvalkanov7/chaoscamp-demo/database"
+	"github.com/dimitarvalkanov7/chaoscamp-demo/encryption"
 	"github.com/dimitarvalkanov7/chaoscamp-demo/models"
 	"github.com/dimitarvalkanov7/chaoscamp-demo/services/github"
 	"golang.org/x/crypto/bcrypt"
@@ -21,16 +20,6 @@ const (
 )
 
 var db = database.ConnectDB()
-
-// TODO MOVE TO OTHER CONTROLLER
-func Repositories(w http.ResponseWriter, r *http.Request) {
-	cmd.Execute("git clone -b v1 https://github.com/docker-training/node-bulletin-board /home/leron/DockerTutorial")
-	tmpl := template.Must(template.ParseFiles(path.Join(basePath, "templates", "repository.html")))
-	err := tmpl.Execute(w, nil)
-	if err != nil {
-		log.Printf("Error executing template: %v\n", err)
-	}
-}
 
 func Home(w http.ResponseWriter, r *http.Request) {
 	_, err := encryption.GetLoggedUser(r)

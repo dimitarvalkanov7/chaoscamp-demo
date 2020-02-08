@@ -12,9 +12,13 @@ import (
 
 const (
 	USER        = "dimitarvalkanov7"
-	API_TOKEN   = "04d2e2ff594e6dba68ffefe03e0af6871351e8af"
+	API_TOKEN   = "be90c072a92e6cac2fe5f70adeb2be35d127c19d"
 	GIT_API_URL = "https://api.github.com/users/dimitarvalkanov7/repos"
 	fullPath    = "https://api.github.com/users/dimitarvalkanov7/repos?access_token=04d2e2ff594e6dba68ffefe03e0af6871351e8af"
+)
+
+var (
+	usedRepositories = []string{"chaoscamp", "golangrulz"}
 )
 
 func GetAllRepositories() []Repository {
@@ -150,7 +154,12 @@ func GetBranchesByRepository() map[string][]string {
 	branchesByRepository := make(map[Repository][]Branch)
 
 	for _, repo := range repositories {
-		branchesByRepository[repo] = GetAllBranchesForRepository(repo)
+		for _, repoWithDockerFile := range usedRepositories {
+
+			if repo.Name == repoWithDockerFile {
+				branchesByRepository[repo] = GetAllBranchesForRepository(repo)
+			}
+		}
 	}
 
 	normalized := normalizeBranchRepoMap(branchesByRepository)
