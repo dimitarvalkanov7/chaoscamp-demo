@@ -2,30 +2,38 @@ package routing
 
 import (
 	"github.com/dimitarvalkanov7/chaoscamp-demo/controllers"
+	"github.com/dimitarvalkanov7/chaoscamp-demo/encryption"
 	"github.com/gorilla/mux"
+	"net/http"
 )
 
 func Handlers() *mux.Router {
-
+	const STATIC_DIR = "/static/"
 	r := mux.NewRouter().StrictSlash(true)
-	// r.Use(CommonMiddleware)
+	r.
+		PathPrefix(STATIC_DIR).
+		Handler(http.StripPrefix(STATIC_DIR, http.FileServer(http.Dir("."+STATIC_DIR))))
+	r.HandleFunc("/", controllers.Login).Methods(http.MethodGet)
+	r.HandleFunc("/login", controllers.Login).Methods(http.MethodGet)
+	r.HandleFunc("/login", controllers.Authenticate).Methods(http.MethodPost)
 
-	// r.HandleFunc("/", controllers.TestAPI).Methods("GET")
-	// r.HandleFunc("/api", controllers.TestAPI).Methods("GET")
-	r.HandleFunc("/", controllers.Home).Methods("GET")
-	r.HandleFunc("/home", controllers.Home).Methods("GET")
-	r.HandleFunc("/register", controllers.AddNewUser).Methods("GET")
-	r.HandleFunc("/register", controllers.Register).Methods("POST")
-	r.HandleFunc("/login", controllers.Login).Methods("GET")
-	r.HandleFunc("/auth", controllers.Authenticate).Methods("POST")
-	r.HandleFunc("/repositories", controllers.Repositories).Methods("GET")
+	s := r.PathPrefix("/auth").Subrouter()
+	s.Use(AuthenticationMiddleware)
+	s.HandleFunc("/home", controllers.Home).Methods(http.MethodGet)
+	s.HandleFunc("/repositories", controllers.Repositories).Methods(http.MethodGet)
+	s.HandleFunc("/create-demoscene", controllers.CreateDemoscene).Methods(http.MethodPost)
 
-	// Auth route
-	// s := r.PathPrefix("/auth").Subrouter()
-	// s.Use(auth.JwtVerify)
-	// s.HandleFunc("/user", controllers.FetchUsers).Methods("GET")
-	// s.HandleFunc("/user/{id}", controllers.GetUser).Methods("GET")
-	// s.HandleFunc("/user/{id}", controllers.UpdateUser).Methods("PUT")
-	// s.HandleFunc("/user/{id}", controllers.DeleteUser).Methods("DELETE")
 	return r
+}
+
+func AuthenticationMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, err := encryption.GetLoggedUser(r)
+		if err != nil {
+			controllers.Login(w, r)
+			return
+		} else {
+			next.ServeHTTP(w, r)
+		}
+	})
 }

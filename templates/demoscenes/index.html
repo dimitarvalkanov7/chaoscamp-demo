@@ -1,26 +1,12 @@
 <!DOCTYPE html>
 <html>
 <body>
-    <h1>This is demoscenes index page</h1>
-    <br />
-    <br />
-    <h3>Temporary we list repos here</h3>
-        {{range $repo, $branches := .BranchesByRepo}}
-            <span>{{$repo}}</span>
-            <select>
-                {{range $branches}}
-                <option value="{{.}}">{{.}}</option>
-                {{end}}
-            </select>
-            <br/>
-        {{end}}
+    <button id="new-demo-scene" onclick="redirectToCreateDemoScene()">Create new demo scene</button>
 
-        <button id="new-demo-scene" onclick="redirectToCreateDemoScene()">Create new demo scene</button>
-
-        <script>
-            function redirectToCreateDemoScene() {
-                window.location.href = '/repositories';
-            }
-        </script>
+    <script>
+        function redirectToCreateDemoScene() {
+            window.location.href = '/auth/repositories';
+        }
+    </script>
 </body>
 </html> 

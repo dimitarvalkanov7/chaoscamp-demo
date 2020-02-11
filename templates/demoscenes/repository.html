@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Demoscenes</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>
+    <link href="/static/create-new-demo-scene.css" rel="stylesheet">
+</head>
+<body>
+    <h1 id="scene-welcome-text">Configure your demoscene</h1>
+    <br />
+    <br />
+    <div id="github-info">
+        <div id="info-error" style="display:none;"></div>
+        <span for="scene-name" class="info-span">Demoscene name</span>
+        <input type="text" id="scene-name" name="scene-name" required="" autofocus="">
+        <br />
+            {{range $repo, $branches := .BranchesByRepo}}
+                <div class="repo-branches">
+                    <span class="info-span">{{$repo}}</span>
+                    <select class="w-226 js-dd">
+                        {{range $branches}}
+                        <option value="{{.}}">{{.}}</option>
+                        {{end}}
+                    </select>
+                </div>
+            {{end}}
+
+        <br />
+        <button id="create-scene" class="btn btn-lg btn-primary btn-block">Create demo scene</button>
+    </div>
+    <span id="progress" style="display:none;">
+        <span id="progress-text">Processing request...</span>
+    </span>
+    <script>
+        $(document).ready(function() {
+            $("#create-scene").bind("click", function() {
+                var sceneName = $('#scene-name').val();
+                
+                repoBranch = [];
+                $('.repo-branches').each(function (i) {
+                    var repo = $(this).find('.info-span').text();
+                    var branch = $(this).find('.js-dd :selected').text()
+
+                    item = {}
+                    item ["repo"] = repo;
+                    item ["branch"] = branch;
+
+                    repoBranch.push(item);
+                });
+
+                data = {
+                    name: sceneName,
+                    rb: repoBranch
+                }
+
+                $('#progress').get(0).style.display=''
+                $('#progress').addClass('progress-shell')
+                $.post("http://localhost:1234/auth/create-demoscene",
+                {
+                    rb: JSON.stringify(data)
+                },
+                function(data){                  
+                    $('#progress').removeClass('progress-shell')
+                    $('#progress').get(0).style.display='none'
+
+                    if(data["Status"] === 'error') {
+                        $('#info-error').get(0).style.display=''
+                        $('#info-error').css('color', 'red')
+                        $('#info-error').css('text-align', 'center')
+                        $('#info-error').text(data["Data"])
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html> 

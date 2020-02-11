@@ -1,0 +1,44 @@
+#scene-welcome-text {
+    font-size: 50px;
+    font-weight: bold;
+    color: #1E90FF;
+    text-align: center;
+} 
+
+#github-info {
+    width: 100%;
+    max-width: 430px;
+    padding: 15px;
+    margin: auto;
+}
+
+.info-span {
+    width: 170px;
+    display: inline-block;
+}
+
+.progress-shell {
+    background: rgba(0, 0, 0, .7);
+    display: block;
+    height: 100%;
+    left: 0;
+    position: absolute;
+    top: 0;
+    width: 100%;
+    z-index: 10000;
+}
+
+#progress-text {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    top: 300px;
+    text-align: center;
+    font-size: 50px;
+    color: #ffffff
+}
+
+.w-226 {
+    width: 226px;
+}

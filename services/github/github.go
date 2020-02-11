@@ -12,7 +12,7 @@ import (
 
 const (
 	USER        = "dimitarvalkanov7"
-	API_TOKEN   = "be90c072a92e6cac2fe5f70adeb2be35d127c19d"
+	API_TOKEN   = "a5e5c7139916d3a8a30483434b81c2c938763203"
 	GIT_API_URL = "https://api.github.com/users/dimitarvalkanov7/repos"
 	fullPath    = "https://api.github.com/users/dimitarvalkanov7/repos?access_token=04d2e2ff594e6dba68ffefe03e0af6871351e8af"
 )
