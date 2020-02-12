@@ -22,6 +22,8 @@ func Handlers() *mux.Router {
 	s.HandleFunc("/home", controllers.Home).Methods(http.MethodGet)
 	s.HandleFunc("/repositories", controllers.Repositories).Methods(http.MethodGet)
 	s.HandleFunc("/create-demoscene", controllers.CreateDemoscene).Methods(http.MethodPost)
+	s.HandleFunc("/demoscene", controllers.GetDemoscene).Methods(http.MethodGet)
+	s.HandleFunc("/delete-demoscene", controllers.DeleteDemoscene).Methods(http.MethodPost)
 
 	return r
 }

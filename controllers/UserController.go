@@ -22,8 +22,8 @@ var db = database.ConnectDB()
 func Login(w http.ResponseWriter, r *http.Request) {
 	_, err := encryption.GetLoggedUser(r)
 	if err == nil {
-		log.Println(err)
-		http.Redirect(w, r, "/home", 302)
+		log.Println("User not found.")
+		http.Redirect(w, r, "/auth/home", 302)
 		return
 	}
 

@@ -1,8 +1,35 @@
 <!DOCTYPE html>
 <html>
+<head>
+    <title>Demoscenes</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>
+    <link href="/static/demo-scene-home.css" rel="stylesheet">
+</head>
 <body>
-    <button id="new-demo-scene" onclick="redirectToCreateDemoScene()">Create new demo scene</button>
-
+    <h1 id="scene-home-text">All demo scenes</h1>
+    <br />
+    <div id="demo-table-container">
+        <table id="demoscene-table">
+            <tr>
+            <th>Demoscene</th>
+            <th>Option</th>
+            </tr>
+            {{range .Scenes}}
+            <tr>
+                <td>{{.}}</td>
+                <td><a href="http://localhost:1234/auth/demoscene?name={{.}}">Open</a></td>
+            </tr>
+            {{end}}
+        </table>
+        <br />
+        <br />
+        <button id="new-demo-scene" class="btn btn-lg btn-primary btn-block" onclick="redirectToCreateDemoScene()">Create new demo scene</button>
+    </div> 
     <script>
         function redirectToCreateDemoScene() {
             window.location.href = '/auth/repositories';

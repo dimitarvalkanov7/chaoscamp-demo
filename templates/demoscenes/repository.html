@@ -73,6 +73,8 @@
                         $('#info-error').css('color', 'red')
                         $('#info-error').css('text-align', 'center')
                         $('#info-error').text(data["Data"])
+                    } else {
+                        window.location.href = "/auth/demoscene?name=" + sceneName
                     }
                 });
             });

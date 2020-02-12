@@ -1,0 +1,44 @@
+#demoscene-display-table, th, td {
+    width: 100%;
+    border: 1px solid #000000;
+    border-collapse: collapse;
+}
+
+th, td {
+    padding: 15px;
+}
+
+#display-table-container {
+    width: 100%;
+    max-width: 800px;
+    margin: auto;
+}
+
+#scene-display-text {
+    font-size: 50px;
+    font-weight: bold;
+    color: #1E90FF;
+    text-align: center;
+} 
+
+.delete-progress-shell {
+    background: rgba(0, 0, 0, .7);
+    display: block;
+    height: 100%;
+    left: 0;
+    position: absolute;
+    top: 0;
+    width: 100%;
+    z-index: 10000;
+}
+
+#delete-progress-text {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    top: 300px;
+    text-align: center;
+    font-size: 50px;
+    color: #ffffff
+}

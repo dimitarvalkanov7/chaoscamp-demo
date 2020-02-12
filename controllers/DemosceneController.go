@@ -4,12 +4,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/dimitarvalkanov7/chaoscamp-demo/models/demoscene"
+	"github.com/dimitarvalkanov7/chaoscamp-demo/services/docker"
 	"github.com/dimitarvalkanov7/chaoscamp-demo/services/github"
 	"html/template"
 	"log"
 	"net/http"
 	"os"
 	"path"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -22,19 +24,38 @@ var (
 )
 
 func Home(w http.ResponseWriter, r *http.Request) {
+	scene := make([]demoscene.Demoscene, 0)
+	scene = demoscene.GetAll()
+	s := make([]string, 0)
+	for k, v := range scene {
+		if k == 0 {
+			s = append(s, v.Name)
+		} else {
+			contains := false
+			for _, sc := range s {
+				if sc == v.Name {
+					contains = true
+				}
+			}
+			if !contains {
+				s = append(s, v.Name)
+			}
+		}
+	}
+
+	type SceneNames struct {
+		Scenes []string
+	}
+	data := SceneNames{Scenes: s}
+
 	tmpl := template.Must(template.ParseFiles(path.Join(basePath, "templates", "demoscenes", "index.html")))
-	err := tmpl.Execute(w, nil)
+	err := tmpl.Execute(w, data)
 	if err != nil {
 		log.Printf("Error executing template: %v\n", err)
 	}
 }
 
 func Repositories(w http.ResponseWriter, r *http.Request) {
-	//res := docker.IsPortAvialable("1235")
-	// rb := make([]RepoWithBranch, 0)
-	// rb = append(rb, RepoWithBranch{Repo: "chaoscamp", Branch: "master"})
-	// rb = append(rb, RepoWithBranch{Repo: "golangrulz", Branch: "master"})
-	// CreateDemoscene("test-demo-scene", rb)
 	res := github.GetBranchesByRepository()
 
 	type Context struct {
@@ -42,7 +63,6 @@ func Repositories(w http.ResponseWriter, r *http.Request) {
 	}
 	data := Context{BranchesByRepo: res}
 
-	//cmd.Execute("git clone -b v1 https://github.com/docker-training/node-bulletin-board /home/leron/DockerTutorial")
 	tmpl := template.Must(template.ParseFiles(path.Join(basePath, "templates", "demoscenes/repository.html")))
 	err := tmpl.Execute(w, data)
 	if err != nil {
@@ -84,11 +104,133 @@ func CreateDemoscene(w http.ResponseWriter, r *http.Request) {
 
 func nameIsNotUnique(sceneName string) bool {
 	scene := demoscene.GetSceneByName(sceneName)
-	if scene == nil {
+	if len(scene) == 0 {
 		return false
 	}
 
 	return true
+}
+
+type SceneContext struct {
+	SceneName string
+	Scene     []demoscene.Demoscene
+}
+
+func GetDemoscene(w http.ResponseWriter, r *http.Request) {
+	sceneName := r.URL.Query().Get("name")
+	scene := make([]demoscene.Demoscene, 0)
+	scene = demoscene.GetSceneByName(sceneName)
+
+	if scene == nil {
+		log.Printf("Unable to find scene: %s", sceneName)
+		http.Redirect(w, r, "/home", 302)
+		return
+	}
+
+	data := SceneContext{SceneName: scene[0].Name, Scene: scene}
+
+	runContainersForDemoscene(scene)
+
+	tmpl := template.Must(template.ParseFiles(path.Join(basePath, "templates", "demoscenes/demoscene.html")))
+	err := tmpl.Execute(w, data)
+	if err != nil {
+		log.Printf("Error executing template: %v\n", err)
+	}
+}
+
+func runContainersForDemoscene(scene []demoscene.Demoscene) {
+	var wg sync.WaitGroup
+	var currName string
+	for _, s := range scene {
+		wg.Add(1)
+		currName = s.RepositoryName + "_" + s.Name
+		go func(cName string) {
+			defer wg.Done()
+			stopContainer(cName)
+		}(currName)
+	}
+	wg.Wait()
+
+	command := "docker container run --name {name} -d -p {port}:8080 {originalName}"
+	for _, s1 := range scene {
+		currName = s1.RepositoryName + "_" + s1.Name
+		c := strings.Replace(command, "{name}", currName, -1)
+		c = strings.Replace(c, "{originalName}", currName, -1)
+		c = strings.Replace(c, "{port}", strconv.Itoa(s1.Port), -1)
+
+		wg.Add(1)
+		go func(com string) {
+			defer wg.Done()
+			cmd.Execute(com)
+		}(c)
+	}
+	wg.Wait()
+}
+
+func DeleteDemoscene(w http.ResponseWriter, r *http.Request) {
+	sceneName := r.URL.Query().Get("name")
+	containers := make([]string, 0)
+
+	scene := demoscene.GetSceneByName(sceneName)
+	for _, v := range scene {
+		sn := v.RepositoryName + "_" + sceneName
+		containers = append(containers, sn)
+	}
+
+	// stop containers
+	var wg sync.WaitGroup
+	for _, container := range containers {
+		wg.Add(1)
+		go func(c string) {
+			defer wg.Done()
+			c1 := "docker stop " + c
+			cmd.Execute(c1)
+		}(container)
+	}
+	wg.Wait()
+
+	// remove containers
+	for _, container := range containers {
+		wg.Add(1)
+		go func(c string) {
+			defer wg.Done()
+			c1 := "docker rm " + c
+			cmd.Execute(c1)
+		}(container)
+	}
+	wg.Wait()
+
+	// remove images
+	command := "docker image rm {image}"
+	for _, image := range containers {
+		wg.Add(1)
+		c := strings.Replace(command, "{image}", image, -1)
+		go func(com string) {
+			defer wg.Done()
+			cmd.Execute(com)
+		}(c)
+	}
+	wg.Wait()
+
+	// soft delete the scene from the DB
+	demoscene.DeleteDemosceneByName(sceneName)
+
+	// remove directory
+	deleteSceneDirectory(sceneName)
+}
+
+func deleteSceneDirectory(sceneName string) {
+	fullPath := path.Join(imagePath, sceneName)
+	command := "rm -rf {path}"
+	c := strings.Replace(command, "{path}", fullPath, -1)
+	cmd.Execute(c)
+}
+
+func stopContainer(containerName string) {
+	c1 := "docker stop " + containerName
+	cmd.Execute(c1)
+	c2 := "docker container rm " + containerName
+	cmd.Execute(c2)
 }
 
 func buildDemoscene(sceneName string, repoBranch []RepoWithBranch) {
@@ -114,23 +256,41 @@ func buildDemoscene(sceneName string, repoBranch []RepoWithBranch) {
 
 	var imageName string
 	var pathToDockerfile string
+	var com string
 	for _, rebr := range repoBranch {
 		imageName = rebr.Repo + "_" + sceneName
 		pathToDockerfile = path.Join(imagePath, sceneName, rebr.Repo)
+		pathWithDockerfile := path.Join(pathToDockerfile, "Dockerfile")
+		com = fmt.Sprintf("docker build -t %s -f %s %s", imageName, pathWithDockerfile, pathToDockerfile)
 
 		wg.Add(1)
-		go func(iname, ptdf string) {
+		go func(com string) {
 			defer wg.Done()
-			pathWithDockerfile := path.Join(ptdf, "Dockerfile")
-			com := fmt.Sprintf("docker build -t %s -f %s %s", iname, pathWithDockerfile, ptdf)
 			cmd.Execute(com)
-		}(imageName, pathToDockerfile)
+		}(com)
 	}
 	wg.Wait()
 
 	//save to database
+	savedPorts := make([]int, 0)
+	savedPorts = demoscene.GetSavedPorts()
 	for _, rb := range repoBranch {
-		demoscene.CreateNewScene(sceneName, rb.Repo, rb.Branch)
+		var portToUse int
+		for i := 50000; i < 60000; i++ {
+			isUsed := false
+			for _, v := range savedPorts {
+				if v == i {
+					isUsed = true
+					break
+				}
+			}
+			if !isUsed && docker.IsPortAvialable(strconv.Itoa(i)) {
+				portToUse = i
+				savedPorts = append(savedPorts, i)
+				break
+			}
+		}
+		demoscene.CreateNewScene(sceneName, rb.Repo, rb.Branch, portToUse)
 	}
 }
 

@@ -10,8 +10,9 @@ CREATE TABLE Users (
 
 CREATE TABLE Demoscenes (
 	Id SERIAL PRIMARY KEY,
-	Name varchar(50) UNIQUE NOT NULL,
+	Name varchar(50) NOT NULL,
 	RepositoryName varchar(250) NOT NULL,
 	BranchName varchar(250) NOT NULL,
+	Port int NOT NULL,
 	IsDeleted int NOT NULL
 )

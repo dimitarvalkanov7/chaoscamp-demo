@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Demoscenes</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>
+    <link href="/static/demo-scene-display.css" rel="stylesheet">
+</head>
+<body>
+    <a class="btn btn-lg btn-primary" href="http://localhost:1234/auth/home">Home</a>
+    <h1 id="scene-display-text"><span id="js-scene-name">{{.SceneName}}</span> demoscene</h1>
+    <br />
+    <div id="display-table-container">
+        <table id="demoscene-display-table">
+            <tr>
+            <th>Demoscene</th>
+            <th>Repository</th>
+            <th>Branch</th>
+            <th>Url</th>
+            </tr>
+            {{range .Scene}}
+            <tr>
+                <td>{{.Name}}</td>
+                <td>{{.RepositoryName}}</td>
+                <td>{{.BranchName}}</td>
+                <td>http://localhost:{{.Port}}</td>
+            </tr>
+            {{end}}
+        </table>
+        <br />
+        <br />
+        <button id="delete-demoscene" class="btn btn-lg btn-primary btn-block">Delete demoscene</button>
+    </div>
+    <span id="delete-progress" style="display:none;">
+        <span id="delete-progress-text">Processing request...</span>
+    </span>
+    <script>
+        $(document).ready(function() {
+            $("#delete-demoscene").bind("click", function() {
+                var sceneName = $('#js-scene-name').text();
+                
+                $('#delete-progress').get(0).style.display=''
+                $('#delete-progress').addClass('delete-progress-shell')
+
+                $.ajax({
+                        url: "/auth/delete-demoscene?name=" + sceneName,
+                        method: "Post",
+                        timeout:60000 //60 second timeout
+                    }).done(function(){
+                        $('#delete-progress').removeClass('delete-progress-shell')
+                        $('#delete-progress').get(0).style.display='none'
+
+                        window.location.href = "/auth/home"
+                    }).fail(function(jqXHR, textStatus){
+                        console.log("fail to close demoscene")
+                })
+            })
+        })
+    </script>
+</body>
+</html> 

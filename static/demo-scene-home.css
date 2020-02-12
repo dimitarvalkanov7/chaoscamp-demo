@@ -1,0 +1,22 @@
+#demoscene-table, th, td {
+    width: 100%;
+    border: 1px solid #000000;
+    border-collapse: collapse;
+}
+
+th, td {
+    padding: 15px;
+}
+
+#demo-table-container {
+    width: 100%;
+    max-width: 500px;
+    margin: auto;
+}
+
+#scene-home-text {
+    font-size: 50px;
+    font-weight: bold;
+    color: #1E90FF;
+    text-align: center;
+} 
